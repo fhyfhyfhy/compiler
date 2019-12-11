@@ -1,0 +1,84 @@
+//文件导入
+import sys.pac;
+import apac;
+
+//主函数
+int main(){
+    //变量定义
+    double a=(a+88*b-(fadf+4548*dsa)/323);
+    static int a,b,c=3,d;                       int b;
+    unsigned int a;
+    double** b;
+    int (char*,int, ...)*[][]* a;//指向“‘函数指针的数组’的数组”的指针
+    int[10] b;
+    unsigned char[] a;
+
+    //赋值语句
+    a=(a+88*b-(fadf+4548*dsa)/323);
+
+    //结构体
+    struct student{
+        int a;
+        int[10] b;
+        unsigned char[] a;
+    };
+
+    struct student s1;
+
+    //联合体
+    union ss{
+        unsigned int a;
+        double** b;
+        int (char*,int, ...)*[][]* a;//指向“‘函数指针的数组’的数组”的指针
+    };
+    
+    //if语句
+    if(a+1){
+        a=a+1;
+        int b;
+        b=b+1;
+        if(a+1){
+            a=a+1;
+            int b;
+            b=b+1;
+            if(a+1){
+                a=a+1;
+            }
+        }
+        else{
+            int a;
+            b=b+2;
+        }
+    }
+    else{
+        b=b+2;
+    }
+    
+    //while语句
+    while(a+1){
+        if(b+2){
+            b=1;
+            break;
+        }
+        int a;
+        while(b+1){
+            int a;
+        }
+    }
+}
+
+//函数定义
+static void x(int a,char b,double bsadf,...){
+    int (char*,int, ...)*[][]* a;
+    a=a+1;
+}
+
+int add(){
+    int a;
+    if(a+1){
+        a=a+1;
+        if(a+1){
+            int b;
+        }
+    }
+}
