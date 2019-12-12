@@ -1,9 +1,11 @@
 package compiler;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ListIterator;
 
 public class Parser {
 	private HashSet<String> T;
@@ -20,7 +22,7 @@ public class Parser {
 	private String word;
 	private HashMap<String,String> propertyMap;		//每个语法符号关联的属性
 	private LinkedList<String> SEM;		//语义栈
-	private LinkedList<String> ILOC;	//四元组
+	private LinkedList<String[]> ILOC;	//四元组
 	private int registerNum;			//全局寄存器编号
 	private int blockNum;				//基本块编号
 	private int level;					//层次
@@ -235,8 +237,13 @@ public class Parser {
 								P.add(word+":#");
 							NT.add(word);
 						}
-						else
+						else {
+							if(word.equals("~")) {
+								word="||";
+								ss=ss.replaceAll("~", "||");
+							}
 							T.add(word);
+						}
 					}
 				}
 				P.add(thisA+":"+ss);
@@ -252,29 +259,34 @@ public class Parser {
 	//分配寄存器
 	private String assignReg() {
 		registerNum++;
-		return "t_"+registerNum;
+		return "T"+registerNum;
 	}
 	
 	//分配标号
 	private String assignTab() {
 		blockNum++;
-		return "L_"+blockNum;
+		return "L"+blockNum;
+	}
+	
+	private void addILOC(String op,String r1,String r2,String rs) {
+		String[] iloc=new String[4];
+		iloc[0]=op;
+		iloc[1]=r1;
+		iloc[2]=r2;
+		iloc[3]=rs;
+		ILOC.add(iloc);
+		
 	}
 	
 	//语法制导操作
 	private void operate(String symbol) {
-		String r2;
-		String iloc;
-		String reg;
 		switch(symbol) {
 		case "intNum":
-			iloc="loadI,"+lex.getLexeme()+", ,"+"r_"+lex.getLexeme();
-			ILOC.addFirst(iloc);
-			System.out.println("<"+iloc+">");
-			SEM.addFirst("r_"+lex.getLexeme());
+			addILOC("loadI",lex.getLexeme()," ","R"+lex.getLexeme());
+			SEM.addFirst("R"+lex.getLexeme());
 			break;
 		case "identifier":
-			SEM.addFirst("r_"+lex.getLexeme());
+			SEM.addFirst("R"+lex.getLexeme());
 			break;
 		case "{":
 			level++;
@@ -286,58 +298,59 @@ public class Parser {
 		case "O_sub":
 		case "O_mult":
 		case "O_div":
+			String r2,reg;
 			r2=SEM.removeFirst();
 			reg=assignReg();
-			iloc=symbol.substring(2,symbol.length())+","+SEM.removeFirst()+","+r2+","+reg;
-			ILOC.addFirst(iloc);
+			addILOC(symbol.substring(2,symbol.length()),SEM.removeFirst(),r2,reg);
 			SEM.addFirst(reg);
-			System.out.println("<"+iloc+">");
-			break;
+			break;	
 		case "O_equel":
-			iloc="load,"+SEM.removeFirst()+", ,"+SEM.removeFirst();
-			ILOC.addFirst(iloc);
-			System.out.println("<"+iloc+">");
+			addILOC("load",SEM.removeFirst()," ",SEM.removeFirst());
 			break;
 		case "O_LookUp":
-			System.out.println("在符号表中查询"+lex.getLexeme());
+			//System.out.println("在符号表中查询"+lex.getLexeme());
 			break;
 		case "O_Insert":
-			System.out.println("在符号表中查询"+lex.getLexeme()+",若查询失败则插入，查询成功则报错\"重复定义变量\"");
+			//System.out.println("在符号表中查询"+lex.getLexeme()+",若查询失败则插入，查询成功则报错\"重复定义变量\"");
 			break;
 		case "O_Type":
-			System.out.println("Type.value="+lex.getLexeme()+"    Type.value在propertyMap中储存");
+			//System.out.println("Type.value="+lex.getLexeme()+"    Type.value在propertyMap中储存");
 			break;
-		case "O_While":
-		case "O_If":
+		case "O_cmpLT":
+		case "O_cmpLE":
+		case "O_cmpEQ":
+		case "O_cmpGE":
+		case "O_cmpGT":
+		case "O_cmpNE":
+			String r;
 			String L1=assignTab(),L2=assignTab();
-			System.out.println("关系运算暂未实现，如comp,r_x,r_y,flag");
-			iloc="cbr_xx,flag,"+L1+","+L2;
-			ILOC.addFirst(iloc);
-			System.out.println("<"+iloc+">");
-			if(symbol.equals("O_While")) {
-				propertyMap.put("WhileCmp_"+level,"关系运算暂未实现，如comp,r_x,r_y,flag");
-				propertyMap.put("WhileCbr_"+level,iloc);
-			}
-			iloc=L1+", , , ";
-			ILOC.addFirst(iloc);
-			System.out.println("<"+iloc+">");
-			propertyMap.put(symbol.substring(2,symbol.length())+"_"+level,L2);
+			r=SEM.removeFirst();
+			addILOC("comp",SEM.removeFirst(),r,"flag");
+			addILOC("cbr_"+symbol.substring(5,7),"flag",L1,L2);
+			addILOC(L1," "," "," ");
+			propertyMap.put("cmp_"+level, L2);
+			break;
+		case "O_If":
+			String endIf=assignTab();
+			propertyMap.put("endIf_"+level, endIf);
+		case "O_While":
+			ListIterator<String[]> itor=ILOC.listIterator(ILOC.size()-1);
+			String[] last=itor.previous();
+			String[] penult=itor.previous();
+			propertyMap.put("While1_"+level,penult[0]+" "+penult[1]+" "+penult[2]+" "+penult[3]);
+			propertyMap.put("While2_"+level,last[0]+" "+last[1]+" "+last[2]+" "+last[3]);
 			break;
 		case "O_Else":
-			iloc=propertyMap.get("If_"+level)+", , , ";
-			ILOC.addFirst(iloc);
-			System.out.println("<"+iloc+">");
+			addILOC("jumpI"," "," ",propertyMap.get("endIf_"+level));
+			addILOC(propertyMap.get("cmp_"+level)," "," "," ");
+			break;
+		case "O_EndIf":
+			addILOC(propertyMap.get("endIf_"+level)," "," "," ");
 			break;
 		case "O_EndWhile":
-			iloc=propertyMap.get("WhileCmp_"+level);
-			ILOC.addFirst(iloc);
-			System.out.println("<"+iloc+">");
-			iloc=propertyMap.get("WhileCbr_"+level);
-			ILOC.addFirst(iloc);
-			System.out.println("<"+iloc+">");
-			iloc=propertyMap.get("While_"+level)+", , , ";
-			ILOC.addFirst(iloc);
-			System.out.println("<"+iloc+">");
+			ILOC.add(propertyMap.get("While1_"+level).split(" "));
+			ILOC.add(propertyMap.get("While2_"+level).split(" "));
+			addILOC(propertyMap.get("cmp_"+level)," "," "," ");
 			break;
 		}
 	}
@@ -442,7 +455,7 @@ public class Parser {
 					word=lex.nextWord();
 			}
 			if(word.equals("EOF")) {
-				System.out.println("EOF");
+				printILOC();
 				break;
 			}
 		}
@@ -510,6 +523,25 @@ public class Parser {
 			}
 			System.out.print("\t"+getTable(nt,"EOF"));
 			System.out.println();
+		}
+	}
+	
+	public void printILOC() {
+		for(String[] iloc:ILOC){
+			if(iloc[2].equals(" ")) {
+				if(iloc[3].equals(" "))
+					System.out.println(iloc[0]+":");
+				else if(iloc[0].equals("jump")||iloc[0].equals("jumpI"))
+					System.out.println(iloc[0]+" "+iloc[1]+" "+iloc[2]+" -> "+iloc[3]);
+				else{
+					System.out.println(iloc[0]+" "+iloc[1]+" "+iloc[2]+" => "+iloc[3]);
+				}
+			}
+			else if(iloc[0].substring(0,3).equals("cbr"))
+				System.out.println(iloc[0]+" "+iloc[1]+" -> "+iloc[2]+","+iloc[3]);
+			else
+				System.out.println(iloc[0]+" "+iloc[1]+","+iloc[2]+" => "+iloc[3]);
+			
 		}
 	}
 }

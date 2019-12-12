@@ -1,10 +1,10 @@
 int main(){
-    int a=(b+c*(d-e)/2),t=21,ttt;
+    int a=(b+c*(d-e)/2),ttt;
     double s=10;
-    if(flag){
+    if(a+s>10){
         int f1=1;
         int f2=2;
-        if(flag2){
+        if((f1+10)*f2<=f2){
             int f3=1;
         }
         else{
@@ -15,10 +15,10 @@ int main(){
         int f3=2;
     }
 
-    while(flag3){
+    while(x+y==10){
         int f6=1;
         int f7=2;
-        if(flag4){
+        if(x!=y){
             int f8=1;
         }
         else{
